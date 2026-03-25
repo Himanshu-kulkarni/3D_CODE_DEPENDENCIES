@@ -1,16 +1,41 @@
-# 3D Code Visualizer
+# CodeSphere — 3D Code Dependency Visualizer
 
-Visualize a Python codebase as an interactive 3D graph in your browser.
+Visualize a Python codebase as an interactive **3D dependency graph** directly in your browser.
 
 ---
 
-## Project Structure
+## 🚀 Overview
+
+Developers often struggle to understand large codebases due to scattered files and hidden dependencies.
+
+**CodeSphere** solves this by:
+
+* Parsing Python code
+* Extracting structure (files, functions, imports)
+* Converting it into a graph
+* Rendering it in an interactive 3D environment
+
+👉 Result: **Instant understanding of code structure**
+
+---
+
+## 🧠 Key Features
+
+* 🔍 **Code Parsing Engine** — Extracts functions and dependencies from `.py` files
+* 🔗 **Dependency Graph Generation** — Builds relationships between modules
+* 🌐 **3D Visualization** — Interactive graph using Three.js
+* 🎯 **Smart Highlighting** — Click a node to focus on related components
+* 🏷 **Persistent Labels** — File names visible directly in the graph
+
+---
+
+## 🏗️ Project Structure
 
 ```
-techvortex/
-├── parser.py           ← Python script: reads .py files → outputs graph.json
-├── graph.json          ← Pre-generated sample (auto-overwritten by parser.py)
-├── index.html          ← Frontend: 3D visualization
+CodeSphere/
+├── parser.py           # Backend: parses code → generates graph.json
+├── graph.json          # Generated dependency graph
+├── index.html          # 3D visualization (frontend)
 └── sample_code/
     ├── main.py
     ├── utils.py
@@ -19,61 +44,110 @@ techvortex/
 
 ---
 
-## Step 1 — Run the Parser
+## ⚙️ How It Works
 
-Make sure Python 3 is installed, then:
+1. **Parse Code**
 
-```bash
-cd techvortex
-python parser.py
-```
+   * Reads Python files
+   * Extracts:
 
-This reads all `.py` files in `sample_code/` and writes `graph.json`.
+     * Functions
+     * Imports (including nested imports)
 
-To point at your own folder, edit this line in `parser.py`:
-```python
-SAMPLE_FOLDER = "sample_code"   # ← change to your folder path
-```
+2. **Build Graph**
+
+   * Nodes → files & functions
+   * Edges → dependencies
+
+3. **Visualize**
+
+   * Rendered in 3D using force-directed layout
+   * Interactive exploration (zoom, rotate, click)
 
 ---
 
-## Step 2 — Start a Local Server
+## ▶️ Run Locally
 
-You must serve the files over HTTP (not file://) so the browser can fetch `graph.json`.
+### 1. Run the parser
 
-**Python (easiest):**
+```bash
+python parser.py
+```
+
+### 2. Start a local server
+
 ```bash
 python -m http.server 8080
 ```
 
-**Node.js (npx):**
-```bash
-npx serve .
-```
+### 3. Open in browser
 
----
-
-## Step 3 — Open in Browser
-
-Go to:
 ```
 http://localhost:8080
 ```
 
 ---
 
-## Controls
+## 🎮 Controls
 
-| Action         | How                    |
-|----------------|------------------------|
-| Rotate         | Left-click + drag      |
-| Zoom           | Scroll wheel           |
-| Click node     | Shows node name + type |
-| Pan            | Right-click + drag     |
+| Action       | Input              |
+| ------------ | ------------------ |
+| Rotate       | Left-click + drag  |
+| Zoom         | Scroll             |
+| Pan          | Right-click + drag |
+| Inspect node | Click              |
 
 ---
 
-## Node Colors
+## 🎨 Node Types
 
-- 🔵 **Cyan** — Python files
-- 🔴 **Pink/Red** — Functions
+* 🔵 **Files** → Python modules
+* 🔴 **Functions** → Functions inside files
+
+---
+
+## 📈 Example Use Cases
+
+* Understanding new codebases
+* Debugging dependencies
+* Learning project architecture
+* Visualizing module relationships
+
+---
+
+## 🔮 Future Enhancements
+
+* 📂 Upload your own codebase
+* 🧠 AI-based code insights
+* 🧩 Large-scale graph clustering
+* 🥽 VR-based immersive exploration
+
+---
+
+## 🧑‍💻 Tech Stack
+
+* **Backend:** Python
+* **Visualization:** Three.js + 3d-force-graph
+* **Data Format:** JSON graph
+
+---
+
+## 💡 Key Insight
+
+> CodeSphere transforms code from **text → structure → visualization**
+
+---
+
+## 🏁 Status
+
+✅ Working MVP
+🚀 Hackathon-ready
+
+---
+
+## 👤 Author
+
+Himanshu Kulkarni
+Computer Science Engineering
+
+---
