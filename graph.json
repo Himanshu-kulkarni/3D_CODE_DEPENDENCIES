@@ -1,0 +1,118 @@
+{
+  "nodes": [
+    {
+      "id": "main",
+      "type": "file"
+    },
+    {
+      "id": "main.fetch_data",
+      "type": "function"
+    },
+    {
+      "id": "main.process",
+      "type": "function"
+    },
+    {
+      "id": "main.run_pipeline",
+      "type": "function"
+    },
+    {
+      "id": "utils",
+      "type": "file"
+    },
+    {
+      "id": "models",
+      "type": "file"
+    },
+    {
+      "id": "models.predict",
+      "type": "function"
+    },
+    {
+      "id": "models.train",
+      "type": "function"
+    },
+    {
+      "id": "models.evaluate",
+      "type": "function"
+    },
+    {
+      "id": "models.save_model",
+      "type": "function"
+    },
+    {
+      "id": "utils.load",
+      "type": "function"
+    },
+    {
+      "id": "utils.clean",
+      "type": "function"
+    },
+    {
+      "id": "utils.format_output",
+      "type": "function"
+    },
+    {
+      "id": "utils.log",
+      "type": "function"
+    }
+  ],
+  "links": [
+    {
+      "source": "main",
+      "target": "main.fetch_data"
+    },
+    {
+      "source": "main",
+      "target": "main.process"
+    },
+    {
+      "source": "main",
+      "target": "main.run_pipeline"
+    },
+    {
+      "source": "main",
+      "target": "utils"
+    },
+    {
+      "source": "main",
+      "target": "models"
+    },
+    {
+      "source": "models",
+      "target": "models.predict"
+    },
+    {
+      "source": "models",
+      "target": "models.train"
+    },
+    {
+      "source": "models",
+      "target": "models.evaluate"
+    },
+    {
+      "source": "models",
+      "target": "models.save_model"
+    },
+    {
+      "source": "models",
+      "target": "utils"
+    },
+    {
+      "source": "utils",
+      "target": "utils.load"
+    },
+    {
+      "source": "utils",
+      "target": "utils.clean"
+    },
+    {
+      "source": "utils",
+      "target": "utils.format_output"
+    },
+    {
+      "source": "utils",
+      "target": "utils.log"
+    }
+  ]
+}

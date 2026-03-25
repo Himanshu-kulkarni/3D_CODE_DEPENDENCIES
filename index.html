@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CodeSphere – 3D Code Visualizer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #020710;
+    --grid: rgba(0,200,255,0.04);
+    --accent: #00e5ff;
+    --accent2: #ff2d78;
+    --file-color: #00e5ff;
+    --fn-color: #ff2d78;
+    --text: #c8f0ff;
+    --panel-bg: rgba(2, 12, 28, 0.85);
+    --border: rgba(0,229,255,0.2);
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridShift 20s linear infinite;
+  }
+  @keyframes gridShift {
+    from { background-position: 0 0; }
+    to   { background-position: 40px 40px; }
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, #020710 100%);
+    pointer-events: none;
+  }
+
+  #graph-container {
+    position: fixed; inset: 0; z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 16px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: linear-gradient(180deg, rgba(2,7,16,0.95) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .logo-icon {
+    width: 38px; height: 38px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .logo-icon svg { width: 100%; height: 100%; }
+
+  .logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.35rem;
+    letter-spacing: 0.12em;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+
+  .logo-sub {
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    color: rgba(0,229,255,0.5);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-stats {
+    display: flex; gap: 24px;
+  }
+
+  .stat {
+    text-align: right;
+  }
+  .stat-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: rgba(200,240,255,0.4);
+    text-transform: uppercase;
+  }
+
+  /* ── SIDE LEGEND ── */
+  .legend {
+    position: fixed; bottom: 28px; left: 28px; z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    backdrop-filter: blur(12px);
+  }
+  .legend-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: rgba(0,229,255,0.5);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+    color: rgba(200,240,255,0.7);
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+
+  /* ── TOOLTIP / INFO PANEL ── */
+  #info-panel {
+    position: fixed; bottom: 28px; right: 28px; z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    min-width: 220px;
+    backdrop-filter: blur(12px);
+    transition: opacity 0.3s, transform 0.3s;
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+  }
+  #info-panel.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .info-type {
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .info-type.file  { color: var(--accent); }
+  .info-type.function { color: var(--accent2); }
+
+  .info-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    word-break: break-all;
+  }
+
+  .info-hint {
+    margin-top: 10px;
+    font-size: 0.62rem;
+    color: rgba(200,240,255,0.3);
+  }
+
+  /* ── CONTROLS HINT ── */
+  .controls-hint {
+    position: fixed; top: 80px; right: 28px; z-index: 100;
+    font-size: 0.65rem;
+    color: rgba(200,240,255,0.25);
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+    text-align: right;
+  }
+
+  /* ── SCAN LINE EFFECT ── */
+  .scanlines {
+    position: fixed; inset: 0; z-index: 200;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+  }
+
+  /* ── LOADING SCREEN ── */
+  #loader {
+    position: fixed; inset: 0; z-index: 300;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg);
+    transition: opacity 0.6s;
+  }
+  #loader.hidden { opacity: 0; pointer-events: none; }
+
+  .loader-ring {
+    width: 60px; height: 60px;
+    border: 2px solid rgba(0,229,255,0.1);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent2);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loader-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+</style>
+</head>
+<body>
+
+<!-- Scanlines overlay -->
+<div class="scanlines"></div>
+
+<!-- Loading screen -->
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">INITIALIZING CodeSphere</div>
+</div>
+
+<!-- 3D Graph container -->
+<div id="graph-container"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="18" stroke="url(#lg1)" stroke-width="1.5"/>
+        <circle cx="19" cy="19" r="4" fill="#00e5ff"/>
+        <line x1="19" y1="1" x2="19" y2="9"  stroke="#00e5ff" stroke-width="1.5"/>
+        <line x1="19" y1="29" x2="19" y2="37" stroke="#ff2d78" stroke-width="1.5"/>
+        <line x1="1"  y1="19" x2="9"  y2="19" stroke="#00e5ff" stroke-width="1.5"/>
+        <line x1="29" y1="19" x2="37" y2="19" stroke="#ff2d78" stroke-width="1.5"/>
+        <line x1="6"  y1="6"  x2="12" y2="12" stroke="#00e5ff" stroke-width="1"/>
+        <line x1="26" y1="26" x2="32" y2="32" stroke="#ff2d78" stroke-width="1"/>
+        <line x1="32" y1="6"  x2="26" y2="12" stroke="#ff2d78" stroke-width="1"/>
+        <line x1="6"  y1="32" x2="12" y2="26" stroke="#00e5ff" stroke-width="1"/>
+        <defs>
+          <linearGradient id="lg1" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00e5ff"/>
+            <stop offset="1" stop-color="#ff2d78"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">CodeSphere</div>
+      <div class="logo-sub">3D Code Visualizer</div>
+    </div>
+  </div>
+
+  <div class="header-stats">
+    <div class="stat">
+      <div class="stat-val" id="stat-nodes">—</div>
+      <div class="stat-label">Nodes</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-links">—</div>
+      <div class="stat-label">Links</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-files">—</div>
+      <div class="stat-label">Files</div>
+    </div>
+  </div>
+</header>
+
+<!-- Controls hint -->
+<div class="controls-hint">
+  🖱 Drag to rotate<br>
+  ⚙ Scroll to zoom<br>
+  👆 Click node for info
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-title">Legend</div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#00e5ff; box-shadow:0 0 6px #00e5ff;"></div>
+    Python File
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background:#ff2d78; box-shadow:0 0 6px #ff2d78;"></div>
+    Function
+  </div>
+</div>
+
+<!-- Info panel -->
+<div id="info-panel">
+  <div class="info-type" id="info-type">FILE</div>
+  <div class="info-name" id="info-name">—</div>
+  <div class="info-hint">Click another node to explore</div>
+</div>
+
+<!-- 3d-force-graph via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/3d-force-graph@1.73.0/dist/3d-force-graph.min.js"></script>
+
+<script>
+(async () => {
+  const loader  = document.getElementById('loader');
+  const panel   = document.getElementById('info-panel');
+  const infoType = document.getElementById('info-type');
+  const infoName = document.getElementById('info-name');
+
+  // Load graph data
+  let graphData;
+  try {
+    const res = await fetch('graph.json');
+    graphData = await res.json();
+  } catch(e) {
+    loader.querySelector('.loader-text').textContent = 'ERROR: graph.json not found';
+    return;
+  }
+
+  // Update header stats
+  const fileCount = graphData.nodes.filter(n => n.type === 'file').length;
+  document.getElementById('stat-nodes').textContent = graphData.nodes.length;
+  document.getElementById('stat-links').textContent = graphData.links.length;
+  document.getElementById('stat-files').textContent = fileCount;
+
+  // Build 3D graph
+  let highlightNodes = new Set();
+  let highlightLinks = new Set();
+  const Graph = ForceGraph3D({ antialias: true, alpha: true })
+    (document.getElementById('graph-container'))
+    .backgroundColor('rgba(0,0,0,0)')
+    .graphData(graphData)
+
+    // Node appearance
+    .nodeColor(node => node.type === 'file' ? '#00e5ff' : '#ff2d78')
+    .nodeVal(node  => node.type === 'file' ? 8 : 3)
+    .nodeLabel(node => `${node.type.toUpperCase()}: ${node.id}`)   // disable default tooltip; we do our own
+
+    // Node geometry: glowing spheres via custom three.js objects
+    .nodeThreeObject(node => {
+      const isFile = node.type === 'file';
+      const color  = isFile ? 0x00e5ff : 0xff2d78;
+      const size   = isFile ? 5 : 3;
+
+      const group = new THREE.Group();
+
+      // Core sphere
+      const geo  = new THREE.SphereGeometry(size, 16, 16);
+      const mat  = new THREE.MeshPhongMaterial({
+        color,
+        emissive: color,
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.95,
+      });
+      group.add(new THREE.Mesh(geo, mat));
+
+      // Glow halo
+      const haloGeo = new THREE.SphereGeometry(size * 1.8, 16, 16);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.07,
+        side: THREE.BackSide,
+      });
+      group.add(new THREE.Mesh(haloGeo, haloMat));
+
+      return group;
+    })
+    .nodeThreeObjectExtend(false)
+
+    // Link appearance
+    .linkColor(() => 'rgba(0,229,255,0.25)')
+    .linkWidth(0.8)
+    .linkDirectionalParticles(2)
+    .linkDirectionalParticleWidth(1.2)
+    .linkDirectionalParticleColor(() => '#00e5ff')
+    .linkDirectionalParticleSpeed(0.005)
+
+    // Click → show info
+    .onNodeClick(node => {
+      const isFile = node.type === 'file';
+
+      infoType.textContent  = isFile ? 'FILE' : 'FUNCTION';
+      infoType.className    = 'info-type ' + (isFile ? 'file' : 'function');
+      infoName.textContent  = node.id;
+      panel.classList.add('visible');
+
+      highlightNodes.clear();
+      highlightLinks.clear();
+
+      highlightNodes.add(node);
+
+      graphData.links.forEach(link => {
+        if (link.source.id === node.id || link.target.id === node.id) {
+          highlightLinks.add(link);
+          highlightNodes.add(link.source);
+          highlightNodes.add(link.target);
+        }
+      });
+
+      Graph.nodeColor(n =>
+        highlightNodes.has(n)
+          ? (n.type === 'file' ? '#00e5ff' : '#ff2d78')
+          : 'rgba(100,100,100,0.2)'
+      );
+
+      Graph.linkColor(l =>
+        highlightLinks.has(l)
+          ? '#00e5ff'
+          : 'rgba(100,100,100,0.1)'
+      );
+    })
+
+    // Camera
+    .cameraPosition({ x: 0, y: 0, z: 280 });
+    Graph.zoomToFit(400);
+
+  // Lighting
+  const scene = Graph.scene();
+  scene.add(new THREE.AmbientLight(0x334455, 1.2));
+
+  const pLight1 = new THREE.PointLight(0x00e5ff, 1.5, 500);
+  pLight1.position.set(100, 100, 100);
+  scene.add(pLight1);
+
+  const pLight2 = new THREE.PointLight(0xff2d78, 1.2, 500);
+  pLight2.position.set(-100, -80, 80);
+  scene.add(pLight2);
+
+  // Auto-rotate slowly
+  let autoRotate = true;
+  Graph.controls().addEventListener('start', () => { autoRotate = false; });
+
+  let angle = 0;
+  (function animate() {
+    if (autoRotate) {
+      angle += 0.0015;
+      const r = 280;
+      Graph.cameraPosition({
+        x: r * Math.sin(angle),
+        y: 0,
+        z: r * Math.cos(angle),
+      });
+    }
+    requestAnimationFrame(animate);
+  })();
+
+  // Hide loader
+  setTimeout(() => { loader.classList.add('hidden'); }, 600);
+})();
+</script>
+</body>
+</html>
